@@ -1,0 +1,48 @@
+{
+  "auth": {
+    "invalidCredentials": "Invalid email or password.",
+    "otpSent": "New login location detected. An OTP has been sent to your email and is valid for {minutes} minutes.",
+    "invalidOtp": "Invalid or expired OTP.",
+    "tokenReuseDetected": "Suspicious activity detected. All sessions have been logged out to protect your account.",
+    "logoutSuccess": "Logged out successfully.",
+    "invalidRefreshToken": "Invalid or expired refresh token.",
+    "accountDisabled": "Your account has been disabled. Please contact an administrator.",
+    "accountNotVerified": "Your account has not been verified yet. Please wait for approval or contact an administrator.",
+    "emailNotVerified": "Your account has not been activated. Please check your email to verify your account."
+  },
+  "passwords": {
+    "reset_email_sent": "An email with password reset instructions has been sent to your address.",
+    "reset_success": "Password has been reset successfully. You can now log in.",
+    "invalid_token": "The password reset token is invalid or has expired."
+  },
+  "users": {
+    "register_success": "Registration successful. A verification email has been sent to your address. Please verify your email before logging in.",
+    "email_exists": "This email is already in use. Please choose another one.",
+    "agency_id_required": "Agency ID is required when registering as an Agent.",
+    "invalid_agency": "The provided Agency is not valid.",
+    "invalid_role_for_registration": "This role is not allowed for self-registration."
+  },
+  "errors": {
+    "unauthorized": "Not authorized, no token found.",
+    "invalidToken": "Not authorized, token is invalid.",
+    "forbidden": "Access denied. You do not have permission to perform this action.",
+    "userNotFound": "No user found with the provided email.",
+    "invalidVerificationToken": "The verification token is invalid or has expired.",
+    "serverError": "System error. Please try again later."
+  },
+  "validation": {
+    "emailRequired": "Email is required.",
+    "invalidEmail": "Email must be a valid email address.",
+    "nameRequired": "Your name is required.",
+    "passwordRequired": "Password is required.",
+    "passwordMin": "Password must be at least 6 characters long.",
+    "passwordPattern": "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (!@#$%^&*).",
+    "passwordConfirm": "Password confirmation does not match.",
+    "passwordConfirmRequired": "Please re-enter your password to confirm.",
+    "roleRequired": "Please select a role.",
+    "roleInvalid": "The selected role is not valid.",
+    "otpRequired": "OTP is required.",
+    "otpLength": "OTP must be exactly 6 characters long.",
+    "refreshTokenRequired": "Refresh token is required."
+  }
+}

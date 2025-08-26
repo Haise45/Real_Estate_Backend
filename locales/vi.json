@@ -1,0 +1,49 @@
+{
+  "auth": {
+    "invalidCredentials": "Email hoặc mật khẩu không chính xác.",
+    "otpSent": "Phát hiện đăng nhập từ vị trí mới. Mã OTP đã được gửi đến email của bạn và có hiệu lực trong {minutes} phút.",
+    "invalidOtp": "Mã OTP không hợp lệ hoặc đã hết hạn.",
+    "tokenReuseDetected": "Phát hiện hành vi đáng ngờ. Tất cả các phiên đã bị đăng xuất để bảo vệ tài khoản của bạn.",
+    "logoutSuccess": "Đăng xuất thành công.",
+    "invalidRefreshToken": "Refresh token không hợp lệ hoặc đã hết hạn.",
+    "accountDisabled": "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ với quản trị viên.",
+    "accountNotVerified": "Tài khoản của bạn chưa được phê duyệt. Vui lòng chờ hoặc liên hệ với quản trị viên.",
+    "emailNotVerified": "Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email để xác minh."
+  },
+  "passwords": {
+    "reset_email_sent": "Một email hướng dẫn đặt lại mật khẩu đã được gửi đến địa chỉ của bạn.",
+    "reset_success": "Mật khẩu đã được đặt lại thành công. Bây giờ bạn có thể đăng nhập.",
+    "invalid_token": "Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."
+  },
+
+  "users": {
+    "register_success": "Đăng ký thành công. Một email xác minh đã được gửi đến địa chỉ của bạn. Vui lòng xác minh email trước khi đăng nhập.",
+    "email_exists": "Email này đã được sử dụng. Vui lòng chọn một email khác.",
+    "agency_id_required": "Cần cung cấp ID của Agency khi đăng ký tài khoản Agent.",
+    "invalid_agency": "Agency được cung cấp không hợp lệ.",
+    "invalid_role_for_registration": "Vai trò này không được phép tự đăng ký."
+  },
+  "errors": {
+    "unauthorized": "Không được phép, không tìm thấy token.",
+    "invalidToken": "Không được phép, token không hợp lệ.",
+    "forbidden": "Từ chối truy cập. Bạn không có quyền thực hiện hành động này.",
+    "userNotFound": "Không tìm thấy người dùng với email được cung cấp.",
+    "invalidVerificationToken": "Token xác minh không hợp lệ hoặc đã hết hạn.",
+    "serverError": "Lỗi hệ thống. Vui lòng thử lại sau."
+  },
+  "validation": {
+    "emailRequired": "Vui lòng nhập email.",
+    "invalidEmail": "Email không hợp lệ.",
+    "nameRequired": "Vui lòng nhập tên của bạn.",
+    "passwordRequired": "Vui lòng nhập mật khẩu.",
+    "passwordMin": "Mật khẩu phải có ít nhất 6 ký tự.",
+    "passwordPattern": "Mật khẩu phải chứa ít nhất một chữ in hoa, một chữ thường, một số, và một ký tự đặc biệt (!@#$%^&*).",
+    "passwordConfirm": "Mật khẩu xác nhận không khớp.",
+    "passwordConfirmRequired": "Vui lòng nhập lại mật khẩu để xác nhận.",
+    "roleRequired": "Vui lòng chọn vai trò.",
+    "roleInvalid": "Vai trò được chọn không hợp lệ.",
+    "otpRequired": "Vui lòng nhập OTP.",
+    "otpLength": "OTP phải có đúng 6 ký tự.",
+    "refreshTokenRequired": "Refresh token là bắt buộc."
+  }
+}
