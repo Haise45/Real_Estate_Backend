@@ -49,20 +49,6 @@ const verifyOtp = (t) => ({
 });
 
 /**
- * Schema xác thực dữ liệu khi làm mới token.
- * - refreshToken: bắt buộc
- */
-const refreshToken = (t) => ({
-  body: Joi.object().keys({
-    refreshToken: Joi.string()
-      .required()
-      .messages({
-        "any.required": t("validation.refreshTokenRequired"),
-      }),
-  }),
-});
-
-/**
  * Schema xác thực dữ liệu khi quên mật khẩu.
  * - email: bắt buộc, phải đúng định dạng email
  */
@@ -104,7 +90,6 @@ const resetPassword = (t) => ({
 module.exports = {
   login,
   verifyOtp,
-  refreshToken,
   forgotPassword,
   resetPassword,
 };

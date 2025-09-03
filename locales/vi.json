@@ -6,6 +6,7 @@
     "tokenReuseDetected": "Phát hiện hành vi đáng ngờ. Tất cả các phiên đã bị đăng xuất để bảo vệ tài khoản của bạn.",
     "logoutSuccess": "Đăng xuất thành công.",
     "invalidRefreshToken": "Refresh token không hợp lệ hoặc đã hết hạn.",
+    "refreshTokenNotFound": "Không tìm thấy refresh token.",
     "accountDisabled": "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ với quản trị viên.",
     "accountNotVerified": "Tài khoản của bạn chưa được phê duyệt. Vui lòng chờ hoặc liên hệ với quản trị viên.",
     "emailNotVerified": "Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email để xác minh."

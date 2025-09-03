@@ -7,6 +7,37 @@ const authService = require("../services/authService");
 const config = require("../config");
 const { BusinessError, AuthError, ForbiddenError } = require("../utils/errors");
 
+// --- HÀM TIỆN ÍCH ---
+/**
+ * Gửi refreshToken qua một cookie an toàn.
+ * @param {object} res - Đối tượng response của Express.
+ * @param {string} token - Chuỗi refreshToken.
+ * @param {boolean} rememberMe - Người dùng có chọn "nhớ tôi" không.
+ */
+const sendRefreshTokenAsCookie = (res, token, rememberMe = false) => {
+  const expirationDays = rememberMe
+    ? config.session.refreshTokenRememberMeExpirationDays
+    : config.session.refreshTokenExpirationDays;
+
+  const cookieOptions = {
+    httpOnly: true, // Ngăn JavaScript phía client truy cập cookie (chống XSS)
+    secure: process.env.NODE_ENV === "production", // Chỉ gửi cookie qua HTTPS ở môi trường production
+    sameSite: "strict", // Ngăn chặn tấn công CSRF
+    path: "/api/auth", // Giới hạn cookie chỉ được gửi đến các path /api/auth
+  };
+
+  // Nếu người dùng không chọn "Remember Me", cookie sẽ là một "session cookie".
+  // Nó sẽ tự động bị xóa khi người dùng đóng trình duyệt.
+  // Nếu người dùng chọn "Remember Me", chúng ta sẽ set thời gian hết hạn cụ thể.
+  if (rememberMe) {
+    cookieOptions.expires = new Date(
+      Date.now() + expirationDays * 24 * 60 * 60 * 1000
+    );
+  }
+
+  res.cookie("refreshToken", token, cookieOptions);
+};
+
 /**
  * Đăng nhập tài khoản.
  * - Nhận email & password từ body.
@@ -15,6 +46,7 @@ const { BusinessError, AuthError, ForbiddenError } = require("../utils/errors");
  */
 const login = asyncHandler(async (req, res) => {
   try {
+    const { rememberMe } = req.body;
     const result = await authService.loginUser({
       ...req.body,
       ip: req.ip,
@@ -28,10 +60,12 @@ const login = asyncHandler(async (req, res) => {
         }),
         requiresOtp: true,
         email: result.email,
+        rememberMe: result.rememberMe,
       });
     }
 
-    res.status(200).json({ success: true, ...result });
+    sendRefreshTokenAsCookie(res, result.refreshToken, rememberMe);
+    res.status(200).json({ success: true, accessToken: result.accessToken });
   } catch (error) {
     if (error instanceof AuthError && error.message === "INVALID_CREDENTIALS") {
       return res
@@ -57,13 +91,15 @@ const login = asyncHandler(async (req, res) => {
  */
 const verifyOtp = asyncHandler(async (req, res) => {
   try {
+    const { rememberMe } = req.body;
     const tokens = await authService.verifyOtpAndLogin({
       ...req.body,
       ip: req.ip,
       userAgent: req.headers["user-agent"],
     });
 
-    res.status(200).json({ success: true, ...tokens });
+    sendRefreshTokenAsCookie(res, tokens.refreshToken, rememberMe);
+    res.status(200).json({ success: true, accessToken: tokens.accessToken });
   } catch (error) {
     if (error instanceof BusinessError && error.message === "INVALID_OTP") {
       return res
@@ -80,19 +116,28 @@ const verifyOtp = asyncHandler(async (req, res) => {
  * - Trả về cặp accessToken & refreshToken mới.
  */
 const refreshToken = asyncHandler(async (req, res) => {
+  // Đọc refreshToken từ cookie
+  const requestToken = req.cookies.refreshToken;
+
+  if (!requestToken) {
+    throw new AuthError("REFRESH_TOKEN_NOT_FOUND");
+  }
+
   try {
     const tokens = await authService.refreshAuthToken({
-      refreshToken: req.body.refreshToken,
+      refreshToken: requestToken,
       ip: req.ip,
       userAgent: req.headers["user-agent"],
     });
 
-    res.status(200).json({ success: true, ...tokens });
+    sendRefreshTokenAsCookie(res, tokens.refreshToken, tokens.rememberMe);
+    res.status(200).json({ success: true, accessToken: tokens.accessToken });
   } catch (error) {
     if (error instanceof AuthError || error instanceof ForbiddenError) {
       const i18nKey = {
         INVALID_REFRESH_TOKEN: "auth.invalidRefreshToken",
         TOKEN_REUSE_DETECTED: "auth.tokenReuseDetected",
+        REFRESH_TOKEN_NOT_FOUND: "auth.refreshTokenNotFound",
         USER_NOT_FOUND_FOR_TOKEN: "errors.serverError", // Lỗi nội bộ, không nên lộ chi tiết
       }[error.message];
       return res.status(error.statusCode).json({ message: req.t(i18nKey) });
@@ -153,6 +198,7 @@ const resetPassword = asyncHandler(async (req, res) => {
  */
 const logout = asyncHandler(async (req, res) => {
   await authService.logoutUser(req.body.refreshToken);
+  res.clearCookie("refreshToken", { path: "/api/auth" });
   res.status(200).json({ success: true, message: req.t("auth.logoutSuccess") });
 });
 

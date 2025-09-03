@@ -44,11 +44,12 @@ const _grantTokens = async (user, ip, userAgent, rememberMe = false) => {
     user._id,
     ip,
     userAgent,
-    expirationDays
+    expirationDays,
+    rememberMe
   );
 
   // 5. Trả về cặp token
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, rememberMe };
 };
 
 /**
@@ -151,6 +152,9 @@ const refreshAuthToken = async ({ refreshToken, ip, userAgent }) => {
     throw new ForbiddenError("TOKEN_REUSE_DETECTED");
   }
 
+  // Đọc trạng thái `rememberMe` từ token cũ
+  const wasRemembered = existingToken.rememberMe;
+
   // 3. Vô hiệu hóa refresh token cũ
   await tokenRepository.invalidateToken(existingToken.token);
 
@@ -160,14 +164,25 @@ const refreshAuthToken = async ({ refreshToken, ip, userAgent }) => {
     .populate("role");
   if (!user) throw new AuthError("USER_NOT_FOUND_FOR_TOKEN");
 
+  // Quyết định thời hạn mới dựa trên trạng thái cũ
+  const newExpirationDays = wasRemembered
+    ? config.session.refreshTokenRememberMeExpirationDays
+    : config.session.refreshTokenExpirationDays;
+
   const accessToken = jwtUtil.generateAccessToken(user);
   const newRefreshToken = await tokenRepository.createRefreshToken(
     existingToken.user,
     ip,
-    userAgent
+    userAgent,
+    newExpirationDays,
+    wasRemembered
   );
 
-  return { accessToken, refreshToken: newRefreshToken };
+  return {
+    accessToken,
+    refreshToken: newRefreshToken,
+    rememberMe: wasRemembered,
+  };
 };
 
 /**

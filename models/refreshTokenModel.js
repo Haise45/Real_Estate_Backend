@@ -12,6 +12,7 @@ const refreshTokenSchema = new mongoose.Schema(
     userAgent: { type: String, required: true },
     expires: { type: Date, required: true },
     isValid: { type: Boolean, default: true },
+    rememberMe: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

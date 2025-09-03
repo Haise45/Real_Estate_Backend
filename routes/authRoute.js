@@ -12,11 +12,7 @@ router.post(
   validate(authValidation.verifyOtp),
   authController.verifyOtp
 );
-router.post(
-  "/refresh-token",
-  validate(authValidation.refreshToken),
-  authController.refreshToken
-);
+router.post("/refresh-token", authController.refreshToken);
 router.post(
   "/forgot-password",
   validate(authValidation.forgotPassword),
@@ -27,11 +23,7 @@ router.post(
   validate(authValidation.resetPassword),
   authController.resetPassword
 );
-router.post(
-  "/logout",
-  validate(authValidation.refreshToken),
-  authController.logout
-);
+router.post("/logout", authController.logout);
 
 // Route được bảo vệ
 router.get("/profile", protect, (req, res) =>

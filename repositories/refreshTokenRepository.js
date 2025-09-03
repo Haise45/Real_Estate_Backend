@@ -7,10 +7,11 @@ const config = require("../config");
  * @param {string|ObjectId} userId - ID của người dùng
  * @param {string} ip - Địa chỉ IP khi tạo token
  * @param {string} userAgent - Thông tin trình duyệt/thiết bị
- * @param {number} expirationDays - Số ngày mà token sẽ hợp lệ (linh hoạt cho tính năng "Nhớ tôi").
+ * @param {number} expirationDays - Số ngày mà token sẽ hợp lệ (linh hoạt cho tính năng "Nhớ tôi")
+ * @param {boolean} rememberMe - Có sử dụng tính năng "Nhớ tôi" hay không
  * @returns {Promise<string>} - Chuỗi refresh token
  */
-const createRefreshToken = async (userId, ip, userAgent, expirationDays) => {
+const createRefreshToken = async (userId, ip, userAgent, expirationDays, rememberMe = false) => {
   // Tạo token dạng: <randomId>.<base64 của userId>
   const token = `${shortid.generate()}.${Buffer.from(
     userId.toString()
@@ -27,6 +28,7 @@ const createRefreshToken = async (userId, ip, userAgent, expirationDays) => {
     ip, // Địa chỉ IP khi tạo token
     userAgent, // Thông tin trình duyệt/thiết bị
     expires, // Ngày hết hạn
+    rememberMe, // Trạng thái "Nhớ tôi"
   });
 
   // Lưu token vào database

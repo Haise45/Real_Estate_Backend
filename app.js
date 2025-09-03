@@ -1,15 +1,23 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const errorMiddleware = require("./middlewares/errorMiddleware");
 const i18nMiddleware = require("./middlewares/i18nMiddleware");
 const authRoutes = require("./routes/authRoute");
 const userRoutes = require("./routes/userRoute");
 const cors = require("cors");
 const app = express();
+require("dotenv").config();
 
 app.use(express.json());
+app.use(cookieParser());
 app.set("trust proxy", true); // Để lấy đúng IP khi chạy sau proxy
 
-app.use(cors()); // Áp dụng middleware CORS
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+); // Áp dụng middleware CORS
 
 app.use(i18nMiddleware); // Áp dụng middleware đa ngôn ngữ toàn cục
 

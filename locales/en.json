@@ -6,6 +6,7 @@
     "tokenReuseDetected": "Suspicious activity detected. All sessions have been logged out to protect your account.",
     "logoutSuccess": "Logged out successfully.",
     "invalidRefreshToken": "Invalid or expired refresh token.",
+    "refreshTokenNotFound": "Refresh token not found.",
     "accountDisabled": "Your account has been disabled. Please contact an administrator.",
     "accountNotVerified": "Your account has not been verified yet. Please wait for approval or contact an administrator.",
     "emailNotVerified": "Your account has not been activated. Please check your email to verify your account."
