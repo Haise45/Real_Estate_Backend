@@ -6,6 +6,13 @@ const asyncHandler = require("../middlewares/asyncMiddleware");
 const authService = require("../services/authService");
 const config = require("../config");
 const { BusinessError, AuthError, ForbiddenError } = require("../utils/errors");
+const {
+  LoginDto,
+  VerifyOtpDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} = require("../dtos/authDtos");
+const UserDto = require("../dtos/userDto");
 
 // --- HÀM TIỆN ÍCH ---
 /**
@@ -46,14 +53,18 @@ const sendRefreshTokenAsCookie = (res, token, rememberMe = false) => {
  */
 const login = asyncHandler(async (req, res) => {
   try {
-    const { rememberMe } = req.body;
-    const result = await authService.loginUser({
-      ...req.body,
-      ip: req.ip,
-      userAgent: req.headers["user-agent"],
-    });
+    // 1. Chuyển đổi req.body thành Input DTO
+    const loginDto = new LoginDto(req.body);
 
-    if (result.requiresOtp) {
+    // 2. Gọi service với DTO
+    const result = await authService.loginUser(
+      loginDto,
+      req.ip,
+      req.headers["user-agent"]
+    );
+
+    // 3. Xử lý kết quả trả về từ service
+    if (result.status === "OTP_REQUIRED") {
       return res.status(200).json({
         message: req.t("auth.otpSent", {
           minutes: config.otp.expirationMinutes,
@@ -64,8 +75,16 @@ const login = asyncHandler(async (req, res) => {
       });
     }
 
-    sendRefreshTokenAsCookie(res, result.refreshToken, rememberMe);
-    res.status(200).json({ success: true, accessToken: result.accessToken });
+    // Nếu status là 'SUCCESS'
+    if (result.status === "SUCCESS") {
+      sendRefreshTokenAsCookie(res, result.refreshToken, result.rememberMe);
+      const userDto = new UserDto(result.user);
+      return res.status(200).json({
+        success: true,
+        accessToken: result.accessToken,
+        user: userDto,
+      });
+    }
   } catch (error) {
     if (error instanceof AuthError && error.message === "INVALID_CREDENTIALS") {
       return res
@@ -91,15 +110,23 @@ const login = asyncHandler(async (req, res) => {
  */
 const verifyOtp = asyncHandler(async (req, res) => {
   try {
-    const { rememberMe } = req.body;
-    const tokens = await authService.verifyOtpAndLogin({
-      ...req.body,
-      ip: req.ip,
-      userAgent: req.headers["user-agent"],
-    });
+    const verifyOtpDto = new VerifyOtpDto(req.body);
+    const result = await authService.verifyOtpAndLogin(
+      verifyOtpDto,
+      req.ip,
+      req.headers["user-agent"]
+    );
 
-    sendRefreshTokenAsCookie(res, tokens.refreshToken, rememberMe);
-    res.status(200).json({ success: true, accessToken: tokens.accessToken });
+    // Luồng này luôn trả về SUCCESS nếu không có lỗi
+    if (result.status === "SUCCESS") {
+      sendRefreshTokenAsCookie(res, result.refreshToken, result.rememberMe);
+      const userDto = new UserDto(result.user);
+      return res.status(200).json({
+        success: true,
+        accessToken: result.accessToken,
+        user: userDto,
+      });
+    }
   } catch (error) {
     if (error instanceof BusinessError && error.message === "INVALID_OTP") {
       return res
@@ -152,7 +179,8 @@ const refreshToken = asyncHandler(async (req, res) => {
  */
 const forgotPassword = asyncHandler(async (req, res) => {
   try {
-    await authService.forgotPassword(req.body.email);
+    const forgotPasswordDto = new ForgotPasswordDto(req.body);
+    await authService.forgotPassword(forgotPasswordDto);
     res
       .status(200)
       .json({ success: true, message: req.t("passwords.reset_email_sent") });
@@ -175,7 +203,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
  */
 const resetPassword = asyncHandler(async (req, res) => {
   try {
-    await authService.resetPassword(req.params.token, req.body.password);
+    const resetPasswordDto = new ResetPasswordDto(req.body, req.params);
+    await authService.resetPassword(resetPasswordDto);
     res
       .status(200)
       .json({ success: true, message: req.t("passwords.reset_success") });
@@ -197,9 +226,18 @@ const resetPassword = asyncHandler(async (req, res) => {
  * - Xóa refreshToken khỏi DB/Redis.
  */
 const logout = asyncHandler(async (req, res) => {
-  await authService.logoutUser(req.body.refreshToken);
+  const refreshToken = req.cookies.refreshToken;
+  await authService.logoutUser(refreshToken);
   res.clearCookie("refreshToken", { path: "/api/auth" });
   res.status(200).json({ success: true, message: req.t("auth.logoutSuccess") });
+});
+
+/**
+ * Lấy thông tin profile của người dùng đang đăng nhập.
+ */
+const getProfile = asyncHandler(async (req, res) => {
+  const userDto = new UserDto(req.user);
+  res.status(200).json({ success: true, data: userDto });
 });
 
 module.exports = {
@@ -209,4 +247,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   logout,
+  getProfile,
 };

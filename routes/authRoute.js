@@ -26,8 +26,6 @@ router.post(
 router.post("/logout", authController.logout);
 
 // Route được bảo vệ
-router.get("/profile", protect, (req, res) =>
-  res.json({ success: true, data: req.user })
-);
+router.get("/profile", protect, authController.getProfile);
 
 module.exports = router;

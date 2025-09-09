@@ -1,18 +1,30 @@
 const asyncHandler = require("../middlewares/asyncMiddleware");
 const userService = require("../services/userService");
 const { BusinessError } = require("../utils/errors");
+const RegisterUserDto = require("../dtos/registerUserDto");
+const UserDto = require("../dtos/userDto");
 
 /**
  * Đăng ký người dùng mới.
  */
 const register = asyncHandler(async (req, res) => {
   try {
-    const user = await userService.registerUser(req.body);
+    // 1. Chuyển đổi request body thô thành một DTO an toàn
+    const registerUserDto = new RegisterUserDto(req.body);
+
+    // 2. Truyền DTO vào service
+    const user = await userService.registerUser(registerUserDto);
+
+    // 3. Populate role và profile để tạo UserDto
+    await user.populate(["role", "profile"]);
+
+    // 4. Chuyển đổi Mongoose model thành một DTO an toàn trước khi gửi
+    const userDto = new UserDto(user);
+
     res.status(201).json({
       success: true,
-      // Sử dụng req.t cho thông báo thành công
       message: req.t("users.register_success"),
-      data: user,
+      data: userDto, // Gửi DTO thay vì model
     });
   } catch (error) {
     // Chỉ xử lý các lỗi nghiệp vụ đã biết

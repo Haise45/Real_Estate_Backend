@@ -7,33 +7,35 @@ const AgencyProfile = require("../models/profiles/agencyProfileModel");
 const AgentProfile = require("../models/profiles/agentProfileModel");
 const UserProfile = require("../models/profiles/userProfileModel");
 const { BusinessError } = require("../utils/errors");
+const RegisterUserDto = require("../dtos/registerUserDto");
 
 /**
  * Đăng ký người dùng mới với vai trò chỉ định.
+ * Hàm này nhận vào một Data Transfer Object (DTO) đã được xác thực và làm sạch.
+ *
  * Quy trình:
  * 1. Kiểm tra email đã tồn tại trong hệ thống chưa.
  * 2. Tìm role theo tên role trong CSDL.
- * 3. Tạo user mới với thông tin (email, password, name, role).
- * 4. Xử lý logic nghiệp vụ theo từng vai trò:
- *    - User: tự động được duyệt, giới hạn 5 tin/tháng.
- *    - Agency: cần Admin/Manager duyệt, giới hạn 30 tin/tháng.
- *    - Agent: cần Agency/Manager duyệt, phải có agencyId hợp lệ, giới hạn 15 tin/tháng.
- * 5. Lưu user vào CSDL, ẩn password trước khi trả về.
+ * 3. Bắt đầu một transaction để đảm bảo tính toàn vẹn dữ liệu giữa User và Profile.
+ * 4. Tạo User và Profile tương ứng với vai trò.
+ * 5. Xử lý logic nghiệp vụ theo từng vai trò:
+ *    - User: Tự động được xác minh email và duyệt, giới hạn 5 tin/tháng.
+ *    - Agency: Cần Admin/Manager duyệt, giới hạn 30 tin/tháng.
+ *    - Agent: Cần Agency/Manager duyệt, phải có agencyId hợp lệ, giới hạn 15 tin/tháng.
+ * 6. Tạo và gửi email xác minh tài khoản.
+ * 7. Commit transaction và trả về đối tượng User đã được lưu.
  *
- * @param {Object} userData - Thông tin đăng ký người dùng.
- * @param {string} userData.email - Email người dùng.
- * @param {string} userData.password - Mật khẩu người dùng.
- * @param {string} userData.name - Tên người dùng.
- * @param {string} userData.roleName - Vai trò của người dùng (User, Agency, Agent).
- * @param {string} [userData.agencyId] - ID của Agency (bắt buộc nếu role là Agent).
- * @returns {Promise<User>} Đối tượng User đã được lưu (không bao gồm password).
+ * @param {RegisterUserDto} registerUserDto - Data Transfer Object chứa thông tin đăng ký.
+ * @returns {Promise<User>} Đối tượng User đã được lưu (trước khi chuyển đổi thành UserDto).
  * @throws {BusinessError} EMAIL_ALREADY_EXISTS - Nếu email đã tồn tại.
  * @throws {BusinessError} AGENCY_ID_REQUIRED - Nếu role là Agent nhưng thiếu agencyId.
  * @throws {BusinessError} INVALID_AGENCY - Nếu agencyId không hợp lệ hoặc không phải Agency.
- * @throws {BusinessError} INVALID_ROLE_FOR_REGISTRATION - Nếu roleName không hợp lệ.
+ * @throws {BusinessError} INVALID_ROLE_FOR_REGISTRATION - Nếu roleName không hợp lệ cho việc tự đăng ký.
+ * @throws {BusinessError} PROFILE_DATA_REQUIRED - Nếu thiếu dữ liệu hồ sơ.
  */
-const registerUser = async (userData) => {
-  const { email, password, name, roleName, agencyId, profileData } = userData;
+const registerUser = async (registerUserDto) => {
+  const { email, password, name, roleName, agencyId, profileData } =
+    registerUserDto;
 
   // Kiểm tra dữ liệu profile
   if (!profileData) {

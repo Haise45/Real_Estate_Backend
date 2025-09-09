@@ -49,14 +49,16 @@ const _grantTokens = async (user, ip, userAgent, rememberMe = false) => {
   );
 
   // 5. Trả về cặp token
-  return { accessToken, refreshToken, rememberMe };
+  return { accessToken, refreshToken, rememberMe, user };
 };
 
 /**
  * Xử lý logic đăng nhập.
- * @returns {object} - Trả về token hoặc thông tin yêu cầu OTP.
+ * @param {LoginDto} loginDto - DTO chứa thông tin đăng nhập.
+ * @returns {object} - Trả về user model hoặc thông tin yêu cầu OTP.
  */
-const loginUser = async ({ email, password, ip, userAgent, rememberMe }) => {
+const loginUser = async (loginDto, ip, userAgent) => {
+  const { email, password, rememberMe } = loginDto;
   // 1. Tìm user theo email
   const user = await userRepository.findUserByEmail(email);
 
@@ -94,18 +96,22 @@ const loginUser = async ({ email, password, ip, userAgent, rememberMe }) => {
     await mailUtil.sendOtpEmail(user.email, otp);
 
     // Trả về thông báo yêu cầu OTP
-    return { requiresOtp: true, email: user.email, rememberMe };
+    return { status: "OTP_REQUIRED", email: user.email, rememberMe };
   }
 
   // 4. Nếu IP trùng, cấp token luôn
-  return await _grantTokens(user, ip, userAgent, rememberMe);
+  const result = await _grantTokens(user, ip, userAgent, rememberMe);
+  return { status: "SUCCESS", ...result };
 };
 
 /**
  * Xử lý logic xác thực OTP và đăng nhập.
- * @returns {object} - Cặp access/refresh token.
+ * @param {VerifyOtpDto} verifyOtpDto - DTO chứa thông tin xác minh.
+ * @returns {object} - Một object kết quả chứa token và thông tin user.
  */
-const verifyOtpAndLogin = async ({ email, otp, ip, userAgent, rememberMe }) => {
+const verifyOtpAndLogin = async (verifyOtpDto, ip, userAgent) => {
+  const { email, otp, rememberMe } = verifyOtpDto;
+
   // 1. Tìm user theo email
   const user = await userRepository.findUserByEmail(email);
 
@@ -122,7 +128,8 @@ const verifyOtpAndLogin = async ({ email, otp, ip, userAgent, rememberMe }) => {
   }
 
   // 4. Nếu OTP hợp lệ, cấp token mới
-  return await _grantTokens(user, ip, userAgent, rememberMe);
+  const result = await _grantTokens(user, ip, userAgent, rememberMe);
+  return { status: "SUCCESS", ...result };
 };
 
 /**
@@ -192,10 +199,11 @@ const refreshAuthToken = async ({ refreshToken, ip, userAgent }) => {
  * 2. Sinh reset token ngẫu nhiên, hash và lưu cùng thời gian hết hạn (1 giờ).
  * 3. Gửi email cho user kèm link reset password.
  *
- * @param {string} email - Email của người dùng cần đặt lại mật khẩu.
+ * @param {ForgotPasswordDto} forgotPasswordDto - DTO chứa email.
  * @throws {BusinessError} USER_NOT_FOUND - Nếu không tìm thấy user theo email.
  */
-const forgotPassword = async (email) => {
+const forgotPassword = async (forgotPasswordDto) => {
+  const { email } = forgotPasswordDto;
   const user = await userRepository.findUserByEmail(email);
   if (!user) {
     throw new BusinessError("USER_NOT_FOUND");
@@ -225,11 +233,11 @@ const forgotPassword = async (email) => {
  * 2. Kiểm tra token còn hạn.
  * 3. Nếu hợp lệ: cập nhật mật khẩu mới và xóa token.
  *
- * @param {string} token - Reset token nhận từ URL.
- * @param {string} newPassword - Mật khẩu mới của người dùng.
+ * @param {ResetPasswordDto} resetPasswordDto - DTO chứa token và mật khẩu mới.
  * @throws {BusinessError} INVALID_OR_EXPIRED_TOKEN - Nếu token không hợp lệ hoặc đã hết hạn.
  */
-const resetPassword = async (token, newPassword) => {
+const resetPassword = async (resetPasswordDto) => {
+  const { token, password } = resetPasswordDto;
   // 1. Hash token nhận được từ URL để so sánh với CSDL
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
@@ -244,7 +252,7 @@ const resetPassword = async (token, newPassword) => {
   }
 
   // 3. Cập nhật mật khẩu và xóa các trường token
-  user.password = newPassword;
+  user.password = password;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpires = undefined;
   await user.save();
